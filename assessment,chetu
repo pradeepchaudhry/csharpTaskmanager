@@ -1,0 +1,152 @@
+##code of Task Manager##
+ using System;
+    using System.Collections.Generic;
+    using System.IO;
+
+    class Program
+    {
+        static List<Task> tasks = new List<Task>();
+        static string tasksFilePath = "tasks.json";
+
+        static void Main(string[] args)
+        {
+            LoadTasks();
+
+            while (true)
+            {
+                Console.WriteLine("---- Task Manager ----");
+                Console.WriteLine("1. Add a Task");
+                Console.WriteLine("2. View Tasks");
+                Console.WriteLine("3. Mark Completed");
+                Console.WriteLine("4. Delete Task");
+                Console.WriteLine("5. Exit");
+                Console.Write("Enter your choice: ");
+                string choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        AddTask();
+                        SaveTasks();
+                        break;
+                    case "2":
+                        ViewTasks();
+                        break;
+                    case "3":
+                        MarkCompleted();
+                        SaveTasks();
+                        break;
+                    case "4":
+                        DeleteTask();
+                        SaveTasks();
+                        break;
+                    case "5":
+                        Console.WriteLine("Exiting Task Manager...");
+                        return;
+                    default:
+                        Console.WriteLine("Invalid choice. Please enter a valid option.");
+                        break;
+                }
+            }
+        }
+
+
+        static void LoadTasks()
+        {
+            if (File.Exists(tasksFilePath))
+            {
+                string[] lines = File.ReadAllLines(tasksFilePath);
+                foreach (string line in lines)
+                {
+                    string[] parts = line.Split('|');
+                    if (parts.Length == 4 && bool.TryParse(parts[3], out bool isCompleted))
+                    {
+                        tasks.Add(new Task
+                        {
+                            Name = parts[0],
+                            Description = parts[1],
+                            DueDate = DateTime.Parse(parts[2]),
+                            IsCompleted = isCompleted
+                        });
+                    }
+                }
+            }
+        }
+
+        static void SaveTasks()
+        {
+            List<string> lines = new List<string>();
+            foreach (Task task in tasks)
+            {
+                lines.Add($"{task.Name}|{task.Description}|{task.DueDate}|{task.IsCompleted}");
+            }
+            File.WriteAllLines(tasksFilePath, lines);
+        }
+
+        static void AddTask()
+        {
+            Console.WriteLine("---- Add a Task ----");
+            Console.Write("Enter Task Name: ");
+            string name = Console.ReadLine();
+            Console.Write("Enter Description: ");
+            string description = Console.ReadLine();
+            Console.Write("Enter Due Date (yyyy-mm-dd): ");
+            if (DateTime.TryParse(Console.ReadLine(), out DateTime dueDate))
+            {
+                tasks.Add(new Task { Name = name, Description = description, DueDate = dueDate, IsCompleted = false });
+                Console.WriteLine("Task added successfully!");
+            }
+            else
+            {
+                Console.WriteLine("Invalid date format. Task not added.");
+            }
+        }
+
+        static void ViewTasks()
+        {
+            Console.WriteLine("---- View Tasks ----");
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {(tasks[i].IsCompleted ? "[Completed]" : "[Incomplete]")} {tasks[i].Name} (Due: {tasks[i].DueDate:yyyy-MM-dd})");
+                Console.WriteLine($"   Description: {tasks[i].Description}");
+            }
+        }
+
+        static void MarkCompleted()
+        {
+            ViewTasks();
+            Console.Write("Enter the task number to mark as completed: ");
+            if (int.TryParse(Console.ReadLine(), out int taskIndex) && taskIndex > 0 && taskIndex <= tasks.Count)
+            {
+                tasks[taskIndex - 1].IsCompleted = true;
+                Console.WriteLine("Task marked as completed!");
+            }
+            else
+            {
+                Console.WriteLine("Invalid task number.");
+            }
+        }
+
+        static void DeleteTask()
+        {
+            ViewTasks();
+            Console.Write("Enter the task number to delete: ");
+            if (int.TryParse(Console.ReadLine(), out int taskIndex) && taskIndex > 0 && taskIndex <= tasks.Count)
+            {
+                tasks.RemoveAt(taskIndex - 1);
+                Console.WriteLine("Task deleted successfully!");
+            }
+            else
+            {
+                Console.WriteLine("Invalid task number.");
+            }
+        }
+    }
+
+    class Task
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public DateTime DueDate { get; set; }
+        public bool IsCompleted { get; set; }
+    }
